@@ -33,12 +33,28 @@ class Wall
   end
 end
 
+class Camera
+  def initialize
+    @position = Vector2D.new(200, 200)
+  end
+
+  attr_reader :position
+
+  def draw
+    Gosu.draw_rect(@position.x - 2, @position.y - 2,
+                   4, 4,
+                   Gosu::Color::RED,
+                   0)
+  end
+end
+
 class X < Gosu::Window
   def initialize
     super 400, 400
     self.caption = 'FEBE'
 
     @walls = 8.times.map { Wall.new }
+    @camera = Camera.new
   end
 
   def update
@@ -46,7 +62,17 @@ class X < Gosu::Window
 
   def draw
     @walls.each(&:draw)
+    @camera.draw
   end
 end
 
 X.new.show
+
+# ~> ArgumentError
+# ~> wrong number of arguments (given 0, expected 1)
+# ~>
+# ~> /var/folders/6h/wj2by4nn7716wzgzgdbh7twmt3k49g/T/seeing_is_believing_temp_dir20200817-96377-prf07k/program.rb:43:in `draw'
+# ~> /var/folders/6h/wj2by4nn7716wzgzgdbh7twmt3k49g/T/seeing_is_believing_temp_dir20200817-96377-prf07k/program.rb:65:in `draw'
+# ~> /Users/paul.sonkoly/.rvm/gems/ruby-2.7.1/gems/gosu-0.15.2/lib/gosu/patches.rb:78:in `tick'
+# ~> /Users/paul.sonkoly/.rvm/gems/ruby-2.7.1/gems/gosu-0.15.2/lib/gosu/patches.rb:78:in `tick'
+# ~> /var/folders/6h/wj2by4nn7716wzgzgdbh7twmt3k49g/T/seeing_is_believing_temp_dir20200817-96377-prf07k/program.rb:69:in `<main>'
