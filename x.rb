@@ -89,6 +89,10 @@ class Camera
   def move(scalar)
     @position = @position + @direction.to_vector2D * scalar
   end
+
+  def turn(rad)
+    @direction = @direction.rotate(rad)
+  end
 end
 
 class Ray
@@ -159,6 +163,12 @@ class X < Gosu::Window
 
       when Gosu::KB_S
         @camera.move(-1.0)
+
+      when Gosu::KB_A
+        @camera.turn(-Math::PI / 36)
+
+      when Gosu::KB_D
+        @camera.turn(Math::PI / 36)
       end
 
     end
@@ -170,7 +180,7 @@ class X < Gosu::Window
   end
 
   def button_down(id)
-    if [Gosu::KB_S, Gosu::KB_W].include? id
+    if [Gosu::KB_A, Gosu::KB_S, Gosu::KB_D, Gosu::KB_W].include? id
       @pressed = @pressed | [id]
     end
   end
