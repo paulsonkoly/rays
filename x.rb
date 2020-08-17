@@ -15,6 +15,32 @@ class Vector2D
   def self.random
     new(rand(0..400), rand(0..400))
   end
+
+  def +(other)
+    Vector2D.new(x + other.x, y + other.y)
+  end
+
+  def -(other)
+    self + other * -1
+  end
+
+  def *(scalar)
+    Vector2D.new(x * scalar, y * scalar)
+  end
+end
+
+class Direction
+  def initialize(direction = 0)
+    @direction = direction
+  end
+
+  def rotate(rad)
+    Direction.new(@direction + rad)
+  end
+
+  def to_vector2D
+    Vector2D.new(Math.cos(@direction), Math.sin(@direction))
+  end
 end
 
 class Wall
@@ -36,6 +62,7 @@ end
 class Camera
   def initialize
     @position = Vector2D.new(200, 200)
+    @direction = Direction.new
   end
 
   attr_reader :position
@@ -46,6 +73,10 @@ class Camera
                    Gosu::Color::RED,
                    0)
   end
+
+  def move(scalar)
+    @position = @position + @direction.to_vector2D * scalar
+  end
 end
 
 class X < Gosu::Window
@@ -55,24 +86,36 @@ class X < Gosu::Window
 
     @walls = 8.times.map { Wall.new }
     @camera = Camera.new
+    @pressed = []
   end
 
   def update
+    @pressed.each do |key|
+      case key
+      when Gosu::KB_W
+        @camera.move(1.0)
+
+      when Gosu::KB_S
+        @camera.move(-1.0)
+      end
+
+    end
   end
 
   def draw
     @walls.each(&:draw)
     @camera.draw
   end
+
+  def button_down(id)
+    if [Gosu::KB_S, Gosu::KB_W].include? id
+      @pressed = @pressed | [id]
+    end
+  end
+
+  def button_up(id)
+    @pressed = @pressed - [id]
+  end
 end
 
 X.new.show
-
-# ~> ArgumentError
-# ~> wrong number of arguments (given 0, expected 1)
-# ~>
-# ~> /var/folders/6h/wj2by4nn7716wzgzgdbh7twmt3k49g/T/seeing_is_believing_temp_dir20200817-96377-prf07k/program.rb:43:in `draw'
-# ~> /var/folders/6h/wj2by4nn7716wzgzgdbh7twmt3k49g/T/seeing_is_believing_temp_dir20200817-96377-prf07k/program.rb:65:in `draw'
-# ~> /Users/paul.sonkoly/.rvm/gems/ruby-2.7.1/gems/gosu-0.15.2/lib/gosu/patches.rb:78:in `tick'
-# ~> /Users/paul.sonkoly/.rvm/gems/ruby-2.7.1/gems/gosu-0.15.2/lib/gosu/patches.rb:78:in `tick'
-# ~> /var/folders/6h/wj2by4nn7716wzgzgdbh7twmt3k49g/T/seeing_is_believing_temp_dir20200817-96377-prf07k/program.rb:69:in `<main>'
