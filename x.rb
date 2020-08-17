@@ -27,6 +27,10 @@ class Vector2D
   def *(scalar)
     Vector2D.new(x * scalar, y * scalar)
   end
+
+  def distance_from(other)
+    Math.sqrt((x - other.x) ** 2 + (y - other.y) ** 2)
+  end
 end
 
 class Direction
@@ -42,6 +46,8 @@ class Direction
     Vector2D.new(Math.cos(@direction), Math.sin(@direction))
   end
 end
+
+
 
 class Wall
   def initialize
@@ -63,19 +69,75 @@ class Camera
   def initialize
     @position = Vector2D.new(200, 200)
     @direction = Direction.new
+
+    @rays = (-Math::PI / 4).step(to: Math::PI / 4, by: Math::PI / 36).map do |direction|
+      Ray.new(self, direction)
+    end
   end
 
-  attr_reader :position
+  attr_reader :position, :direction
 
-  def draw
+  def draw(walls)
     Gosu.draw_rect(@position.x - 2, @position.y - 2,
                    4, 4,
                    Gosu::Color::RED,
                    0)
+
+    @rays.each { |ray| ray.draw(walls) }
   end
 
   def move(scalar)
     @position = @position + @direction.to_vector2D * scalar
+  end
+end
+
+class Ray
+  def initialize(camera, direction)
+    @camera = camera
+    @direction = direction
+  end
+
+  def position
+    @camera.position
+  end
+
+  def direction
+    @camera.direction.rotate(@direction)
+  end
+
+  def draw(walls)
+    hits = walls.map { |wall| cast(wall) }.compact
+    closest = hits.min_by { |hit| position.distance_from(hit) }
+
+    if closest
+      Gosu.draw_line(position.x, position.y, Gosu::Color::WHITE,
+                     closest.x, closest.y, Gosu::Color::WHITE, 0)
+    end
+  end
+
+  private
+
+  def point_behind
+    position - direction.to_vector2D
+  end
+
+  def cast(wall)
+    x1=position.x
+    y1=position.y
+    x2=point_behind.x
+    y2=point_behind.y
+    x3=wall.a.x
+    y3=wall.a.y
+    x4=wall.b.x
+    y4=wall.b.y
+
+    denom = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4)
+    t = ((x1 - x3) * (y3 - y4) - (y1 - y3) * (x3 - x4)) / denom
+    u = ((y1 - y2) * (x1 - x3) - (x1 - x2) * (y1 - y3)) / denom
+
+    if 0 <= u && t <= 0 && u <= 1.0 then
+      Vector2D.new(x1 + t * (x2 - x1), y1 + t * (y2 - y1))
+    end
   end
 end
 
@@ -104,7 +166,7 @@ class X < Gosu::Window
 
   def draw
     @walls.each(&:draw)
-    @camera.draw
+    @camera.draw(@walls)
   end
 
   def button_down(id)
