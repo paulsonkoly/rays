@@ -70,8 +70,8 @@ class Camera
     @position = Vector2D.new(200, 200)
     @direction = Direction.new
 
-    @rays = (-Math::PI / 4).step(to: Math::PI / 4, by: Math::PI / 36).map do |direction|
-      Ray.new(self, direction)
+    @rays = (-Math::PI / 4).step(to: Math::PI / 4, by: Math::PI / 36).map.with_index do |direction, index|
+      Ray.new(self, direction, index)
     end
   end
 
@@ -96,9 +96,10 @@ class Camera
 end
 
 class Ray
-  def initialize(camera, direction)
+  def initialize(camera, direction, index)
     @camera = camera
     @direction = direction
+    @index = index
   end
 
   def position
@@ -116,10 +117,28 @@ class Ray
     if closest
       Gosu.draw_line(position.x, position.y, Gosu::Color::WHITE,
                      closest.x, closest.y, Gosu::Color::WHITE, 0)
+
+      distance = position.distance_from(closest)
+      distance *= Math.cos(@direction)
+
+      width = 400.fdiv 18
+      height = linear_map distance, 0, 400, 400, 50
+
+      y_offset = (400 - height) / 2
+      shade = linear_map(distance, 0, 400, 255, 0)
+      Gosu.draw_rect(400 + @index * width,
+                     y_offset,
+                     width,
+                     height,
+                     Gosu::Color.rgba(shade, shade, shade, 255))
     end
   end
 
   private
+
+  def linear_map(value, mina, maxa, minb, maxb)
+    (maxb - minb) * (value - mina) / (maxa - mina) + minb
+  end
 
   def point_behind
     position - direction.to_vector2D
@@ -147,7 +166,7 @@ end
 
 class X < Gosu::Window
   def initialize
-    super 400, 400
+    super 800, 400
     self.caption = 'FEBE'
 
     @walls = 8.times.map { Wall.new }
@@ -191,3 +210,16 @@ class X < Gosu::Window
 end
 
 X.new.show
+
+# ~> TypeError
+# ~> Direction can't be coerced into Float
+# ~>
+# ~> /var/folders/6h/wj2by4nn7716wzgzgdbh7twmt3k49g/T/seeing_is_believing_temp_dir20200818-76816-9xntsl/program.rb:134:in `-'
+# ~> /var/folders/6h/wj2by4nn7716wzgzgdbh7twmt3k49g/T/seeing_is_believing_temp_dir20200818-76816-9xntsl/program.rb:134:in `draw'
+# ~> /var/folders/6h/wj2by4nn7716wzgzgdbh7twmt3k49g/T/seeing_is_believing_temp_dir20200818-76816-9xntsl/program.rb:98:in `block in draw'
+# ~> /var/folders/6h/wj2by4nn7716wzgzgdbh7twmt3k49g/T/seeing_is_believing_temp_dir20200818-76816-9xntsl/program.rb:98:in `each'
+# ~> /var/folders/6h/wj2by4nn7716wzgzgdbh7twmt3k49g/T/seeing_is_believing_temp_dir20200818-76816-9xntsl/program.rb:98:in `draw'
+# ~> /var/folders/6h/wj2by4nn7716wzgzgdbh7twmt3k49g/T/seeing_is_believing_temp_dir20200818-76816-9xntsl/program.rb:210:in `draw'
+# ~> /Users/paul.sonkoly/.rvm/gems/ruby-2.7.1/gems/gosu-0.15.2/lib/gosu/patches.rb:78:in `tick'
+# ~> /Users/paul.sonkoly/.rvm/gems/ruby-2.7.1/gems/gosu-0.15.2/lib/gosu/patches.rb:78:in `tick'
+# ~> /var/folders/6h/wj2by4nn7716wzgzgdbh7twmt3k49g/T/seeing_is_believing_temp_dir20200818-76816-9xntsl/program.rb:224:in `<main>'
