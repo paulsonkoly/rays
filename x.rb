@@ -4,6 +4,8 @@
 
 require 'gosu'
 
+RESOLUTION = 64
+
 class Vector2D
   def initialize(x, y)
     @x = x
@@ -70,7 +72,7 @@ class Camera
     @position = Vector2D.new(200, 200)
     @direction = Direction.new
 
-    @rays = (-Math::PI / 4).step(to: Math::PI / 4, by: Math::PI / 36).map.with_index do |direction, index|
+    @rays = (-Math::PI / 4).step(to: Math::PI / 4, by: Math::PI / 2 / RESOLUTION).map.with_index do |direction, index|
       Ray.new(self, direction, index)
     end
   end
@@ -121,7 +123,7 @@ class Ray
       distance = position.distance_from(closest)
       distance *= Math.cos(@direction)
 
-      width = 400.fdiv 18
+      width = 400.fdiv RESOLUTION
       height = linear_map distance, 0, 400, 400, 50
 
       y_offset = (400 - height) / 2
@@ -210,16 +212,3 @@ class X < Gosu::Window
 end
 
 X.new.show
-
-# ~> TypeError
-# ~> Direction can't be coerced into Float
-# ~>
-# ~> /var/folders/6h/wj2by4nn7716wzgzgdbh7twmt3k49g/T/seeing_is_believing_temp_dir20200818-76816-9xntsl/program.rb:134:in `-'
-# ~> /var/folders/6h/wj2by4nn7716wzgzgdbh7twmt3k49g/T/seeing_is_believing_temp_dir20200818-76816-9xntsl/program.rb:134:in `draw'
-# ~> /var/folders/6h/wj2by4nn7716wzgzgdbh7twmt3k49g/T/seeing_is_believing_temp_dir20200818-76816-9xntsl/program.rb:98:in `block in draw'
-# ~> /var/folders/6h/wj2by4nn7716wzgzgdbh7twmt3k49g/T/seeing_is_believing_temp_dir20200818-76816-9xntsl/program.rb:98:in `each'
-# ~> /var/folders/6h/wj2by4nn7716wzgzgdbh7twmt3k49g/T/seeing_is_believing_temp_dir20200818-76816-9xntsl/program.rb:98:in `draw'
-# ~> /var/folders/6h/wj2by4nn7716wzgzgdbh7twmt3k49g/T/seeing_is_believing_temp_dir20200818-76816-9xntsl/program.rb:210:in `draw'
-# ~> /Users/paul.sonkoly/.rvm/gems/ruby-2.7.1/gems/gosu-0.15.2/lib/gosu/patches.rb:78:in `tick'
-# ~> /Users/paul.sonkoly/.rvm/gems/ruby-2.7.1/gems/gosu-0.15.2/lib/gosu/patches.rb:78:in `tick'
-# ~> /var/folders/6h/wj2by4nn7716wzgzgdbh7twmt3k49g/T/seeing_is_believing_temp_dir20200818-76816-9xntsl/program.rb:224:in `<main>'
