@@ -6,6 +6,8 @@ require 'gosu'
 
 RESOLUTION = 64
 
+COLORS = %i[AQUA RED GREEN BLUE YELLOW FUCHSIA CYAN].map { |sym| Gosu::Color.const_get(sym) }
+
 class Vector2D
   def initialize(x, y)
     @x = x
@@ -55,15 +57,13 @@ class Wall
   def initialize
     @a = Vector2D.random
     @b = Vector2D.random
+    @color = COLORS.sample
   end
 
-  attr_reader :a, :b
+  attr_reader :a, :b, :color
 
   def draw
-    Gosu.draw_line(@a.x, @a.y,
-                   Gosu::Color::WHITE,
-                   @b.x, @b.y,
-                   Gosu::Color::WHITE)
+    Gosu.draw_line(@a.x, @a.y, @color, @b.x, @b.y, @color)
   end
 end
 
@@ -113,26 +113,27 @@ class Ray
   end
 
   def draw(walls)
-    hits = walls.map { |wall| cast(wall) }.compact
-    closest = hits.min_by { |hit| position.distance_from(hit) }
+    hits = walls.map { |wall| [ wall.color, cast(wall) ] }.filter { |_, hit| !hit.nil? }
+    color, closest = hits.min_by { |_, hit| position.distance_from(hit) }
 
     if closest
       Gosu.draw_line(position.x, position.y, Gosu::Color::WHITE,
                      closest.x, closest.y, Gosu::Color::WHITE, 0)
 
       distance = position.distance_from(closest)
-      distance *= Math.cos(@direction)
+      distance *= Math.cos(@direction) ** 0.5
 
       width = 400.fdiv RESOLUTION
       height = linear_map distance, 0, 400, 400, 50
 
       y_offset = (400 - height) / 2
-      shade = linear_map(distance, 0, 400, 255, 0)
+      hue, saturation = %i[hue saturation].map { |sym| color.public_send(sym) }
+      value = linear_map(distance, 0, 300, 1.0, 0)
       Gosu.draw_rect(400 + @index * width,
                      y_offset,
                      width,
                      height,
-                     Gosu::Color.rgba(shade, shade, shade, 255))
+                     Gosu::Color.from_hsv(hue, saturation, value))
     end
   end
 
